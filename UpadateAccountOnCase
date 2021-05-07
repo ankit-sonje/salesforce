@@ -1,0 +1,90 @@
+Script --->
+
+global class UpdateAccount implements Database.Batchable<sObject>{
+    
+    global Database.querylocator start(Database.BatchableContext BC)
+    {
+        //All cases
+        string query  = 'Select Id,casenumber, contactid, accountid from case';
+        return Database.getQueryLocator(query);
+    }
+    
+    global void execute(Database.BatchableContext BC, List<Case> cases){
+        //List of cases to be updated
+        List<Case> needToUpdate = new List<Case>();
+        for(Case c : cases){
+            //get accountid from contactid for matching with case accountid
+            Contact con = [select id,accountid from contact where id =: c.ContactId];
+            if(c.AccountId != con.AccountId){
+                needToUpdate.add(c);
+                //update accountid
+                needToUpdate.get(needToUpdate.size()-1).accountid = con.AccountId;   
+            }            
+        }
+        try{
+            //update the list
+            update needToUpdate;
+        }catch(Exception e){
+            system.debug('Exception occured: '+ e );
+        }
+    }
+    
+    global void finish(Database.BatchableContext BC){
+    }
+}
+
+
+-----------------------------------------------------------------------------------------------------------------------------------
+Test Class -->
+
+@isTest
+public class UpdateAccounttest {
+    
+    @testSetup static void setupMethod(){
+        
+        Account acc1 = new Account();
+        Account acc2 = new Account();
+        Account acc3 = new Account();
+        
+        acc1.Name = 'Jack Ryan Account';
+        acc2.Name = 'Iron Man Account';
+        acc3.Name = 'Captain America Account';
+        
+        insert acc1;
+        insert acc2;
+        insert acc3;
+        
+        Contact con1 = new Contact();
+        Contact con2 = new Contact();
+        
+        con1.LastName = 'Jack Ryan';
+        con1.AccountId = acc1.Id;
+        con2.LastName = 'Iron Man';
+        con2.AccountId = acc2.Id;
+        
+        insert con1;
+        insert con2;
+        
+        Case case1 = new Case();
+        case1.contactid = con1.id;
+        case1.AccountId = acc1.Id;
+        insert case1;
+        
+        Case case2 = new Case();
+        case2.contactid = con2.id;
+        case2.AccountId = acc3.Id;
+        insert case2;
+        
+    }
+    
+    @isTest public static void testCode(){
+        Test.startTest();
+        
+        UpdateAccount u = new UpdateAccount();
+        Database.executeBatch(u);
+                
+        Test.stopTest();
+    }
+}
+
+--------------------------------------------------------------------------------------------------------------------
