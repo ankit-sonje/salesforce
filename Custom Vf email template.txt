@@ -1,0 +1,82 @@
+AccountEmailTemplate class -->
+
+public class AccountEmailTemplate
+{
+    public Id accountId {get;set;}
+    public List<Contact> getContactList()
+    {
+        List<Contact> conList;
+        conList = [SELECT FirstName, LastName, Email, Phone FROM Contact WHERE AccountId =: accountId];
+        return conList;
+    }
+}
+------------------------------------------------------------------------------------------------------------------------
+ContactList Controller -->
+
+<apex:component controller="AccountEmailTemplate" access="global">
+    <apex:attribute name="AccId" type="Id" description="Id of the account" assignTo="{!accountId}"/>
+    <style type="text/css">
+            body {font-family: Courier; size: 12pt;}
+ 
+            table {
+            border-width: 5px;
+            border-spacing: 5px;
+            border-style: dashed;
+            border-color: #FF0000;
+            background-color: #FFFFFF;
+        }
+ 
+        td {
+            border-width: 1px;
+            padding: 4px;
+            border-style: solid;
+            border-color: #000000;
+            background-color: #FFEECC;
+        }
+ 
+        th { 
+            color: #000000;
+            border-width: 1px ;
+            padding: 4px ;
+            border-style: solid ;
+            border-color: #000000;
+            background-color: #FFFFF0;
+        }
+        </style>
+    <table border = "2" cellspacing = "5">
+        <tr>
+            <td>First Name</td>
+            <td>Last Name</td>    
+            <td>Email</td>    
+            <td>Phone</td>                
+        </tr>
+        <apex:repeat value="{!ContactList}" var="con">
+            <tr>
+                <td>{!con.FirstName}</td>
+                <td>{!con.LastName}</td>     
+                <td>{!con.Email}</td>     
+                <td>{!con.Phone}</td>     
+            </tr>
+        </apex:repeat>        
+    </table>
+</apex:component>
+
+-------------------------------------------------------------------------------------------------------------------------
+VisualForce Email Template -->
+
+<messaging:emailTemplate subject="Welcome to salesforce : {!relatedTo.name}" recipientType="Contact" relatedToType="Account">
+<messaging:htmlEmailBody >
+    <html>
+        <body>
+            <p>Dear {!recipient.name},</p>
+            <p>Below is a list of contacts related to {!relatedTo.name} Account.</p>
+            <!--Embedded Visualforce component here -->
+            <c:ContactList AccId="{!relatedTo.Id}" /><br/><br/>
+            <b>Regards,</b><br/>
+            {!recipient.FirstName}  
+        </body>
+    </html>
+</messaging:htmlEmailBody>
+</messaging:emailTemplate>
+
+--------------------------------------------------------------------------------------------------------------------------
