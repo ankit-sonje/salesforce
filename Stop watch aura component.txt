@@ -1,0 +1,82 @@
+StopWatch.cmp -->
+
+<aura:component >
+    <aura:handler name="init" value="{! this }" action="{!c.doInit}"/>
+    <aura:attribute name="ltngCurrTime" type="String" default="00:00:00"/>
+    <aura:attribute name="ltngIsDisplayed" type="boolean" default="false"/> 
+    
+    <div class="slds-card slds-align_absolute-center" style="width:250px;padding:8px;" >
+        <div class="slds-grid slds-wrap" >
+            <div class="slds-col slds-size_1-of-1 slds-align_absolute-center" >
+                <b>Stopwatch</b>
+            </div>
+            <div class="slds-col slds-size_1-of-1 slds-align_absolute-center" >
+                {!v.ltngCurrTime}
+            </div>
+            <div class="slds-col slds-size_1-of-1 slds-align_absolute-center">
+                <lightning:button variant="brand" label="Start" onclick="{! c.handleStartClick }" disabled="{!v.ltngIsDisplayed}"/>
+                <lightning:button variant="brand" label="Stop" onclick="{! c.handleStopClick }" disabled="{! !v.ltngIsDisplayed}"/>
+                <lightning:button variant="brand" label="Reset" onclick="{! c.handleResetClick }" />
+            </div>
+        </div>
+    </div>    
+</aura:component>
+----------------------------------------------------------------------------------------------------------------------------------------------------------
+StopWatchApp.app -->
+
+<aura:application extends="force:slds">
+	  <c:StopWatch />
+</aura:application>
+------------------------------------------------------------------------------------------------------------------------------------------------
+StopWatchController.js -->
+
+({
+    doInit : function(component, event, helper) {
+		console.log("diinit get called!!");
+	},
+    handleStartClick : function(component, event, helper) {
+		console.log("start button clicked!!");
+        helper.setStartTimeOnUI(component);
+	},
+    handleStopClick : function(component, event, helper) {
+		console.log("stop button clicked!!");
+        helper.setStopTimeOnUI(component);
+	},
+    handleResetClick : function(component, event, helper) {
+		console.log("Reset button clicked!!");
+        helper.setResetTimeOnUI(component);
+	}   
+})
+----------------------------------------------------------------------------------------------------------------------------------------------
+StopWatchHelper.js -->
+
+({
+    waitingTimeId: null,
+	setStartTimeOnUI : function(component) {
+        component.set("v.ltngIsDisplayed",true);
+        var currTime =component.get("v.ltngCurrTime");
+        var ss = currTime.split(":");
+        var dt = new Date();
+        dt.setHours(ss[0]);
+        dt.setMinutes(ss[1]);
+        dt.setSeconds(ss[2]);
+        
+        var dt2 = new Date(dt.valueOf() + 1000);
+        var temp = dt2.toTimeString().split(" ");
+        var ts = temp[0].split(":");
+        
+        component.set("v.ltngCurrTime",ts[0] + ":" + ts[1] + ":" + ts[2]);
+        this.waitingTimeId =setTimeout($A.getCallback(() => this.setStartTimeOnUI(component)), 1000);
+    },
+    setStopTimeOnUI : function(component) {
+        component.set("v.ltngIsDisplayed",false);
+        window.clearTimeout(this.waitingTimeId);
+    },
+    setResetTimeOnUI : function(component) {
+        component.set("v.ltngIsDisplayed",false);
+        component.set("v.ltngCurrTime","00:00:00");
+        window.clearTimeout(this.waitingTimeId);
+    }
+})
+
+-------------------------------------------------------------------------------------------------------------------------------------------
